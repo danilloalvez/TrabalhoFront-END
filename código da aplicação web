@@ -1,0 +1,801 @@
+npm create vite@latest codemedio-app -- --template react-ts
+cd codemedio-app
+npm install react-router-dom
+  
+  export interface Lesson {
+  id: number;
+  title: string;
+  topic: "Lógica" | "Web" | "Dados";
+  duration: string;
+  summary: string;
+  codeExample: string;
+  completed: boolean;
+}
+
+export interface StudentSession {
+  name: string;
+  schoolGrade: string;
+  loggedIn: boolean;
+}
+
+import { Lesson } from "../types/learning";
+
+export const INITIAL_LESSONS: Lesson[] = [
+  {
+    id: 1,
+    title: "Variáveis e Tipos Primitivos",
+    topic: "Lógica",
+    duration: "20 min",
+    summary: "Entenda como o computador guarda textos, números e valores lógicos na memória.",
+    codeExample: `const escola: string = "Ensino Médio";\nlet pontos: number = 100;\nlet aprovado: boolean = true;`,
+    completed: true,
+  },
+  {
+    id: 2,
+    title: "Condicionais: Tomando Decisões",
+    topic: "Lógica",
+    duration: "25 min",
+    summary: "Use if e else para fazer seu programa reagir a diferentes cenários.",
+    codeExample: `if (nota >= 7) {\n  console.log("Passou de ano!");\n} else {\n  console.log("Hora de revisar!");\n}`,
+    completed: false,
+  },
+  {
+    id: 3,
+    title: "Estrutura de uma Página com HTML e CSS",
+    topic: "Web",
+    duration: "30 min",
+    summary: "Aprenda a estruturar títulos, botões e estilos visuais para a internet.",
+    codeExample: `<button class="btn-destaque">Começar Agora</button>`,
+    completed: false,
+  },
+  {
+    id: 4,
+    title: "Listas e Arrays no Dia a Dia",
+    topic: "Dados",
+    duration: "25 min",
+    summary: "Organize coleções de itens, como notas escolares ou tarefas de estudo.",
+    codeExample: `const linguagens: string[] = ["TypeScript", "Python", "HTML"];\nconsole.log(linguagens.length);`,
+    completed: false,
+  },
+];
+
+import React, { createContext, useContext, useState, ReactNode } from "react";
+import { StudentSession } from "../types/learning";
+
+interface AuthContextType {
+  student: StudentSession;
+  loginStudent: (name: string, schoolGrade: string) => void;
+  logoutStudent: () => void;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [student, setStudent] = useState<StudentSession>({
+    name: "",
+    schoolGrade: "1º Ano do Ensino Médio",
+    loggedIn: false,
+  });
+
+  const loginStudent = (name: string, schoolGrade: string) => {
+    setStudent({
+      name: name.trim() || "Estudante",
+      schoolGrade,
+      loggedIn: true,
+    });
+  };
+
+  const logoutStudent = () => {
+    setStudent({
+      name: "",
+      schoolGrade: "1º Ano do Ensino Médio",
+      loggedIn: false,
+    });
+  };
+
+  return (
+    <AuthContext.Provider value={{ student, loginStudent, logoutStudent }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = (): AuthContextType => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth deve ser usado dentro de um AuthProvider");
+  }
+  return context;
+};
+
+import React from "react";
+import { Link } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+
+export const Navbar: React.FC = () => {
+  const { student, logoutStudent } = useAuth();
+
+  return (
+    <header style={styles.header}>
+      <div style={styles.brand}>CodeMédio</div>
+      <nav style={styles.nav}>
+        <Link style={styles.link} to="/">Home</Link>
+        <Link style={styles.link} to="/sobre">Sobre</Link>
+        <Link style={styles.link} to="/dashboard">Dashboard</Link>
+        <Link style={styles.link} to="/contato">Contato</Link>
+        {student.loggedIn ? (
+          <div style={styles.userBox}>
+            <span style={styles.userBadge}>Olá, {student.name}</span>
+            <button onClick={logoutStudent} style={styles.btnSmall}>Sair</button>
+          </div>
+        ) : (
+          <Link style={styles.btnLink} to="/login">Login</Link>
+        )}
+      </nav>
+    </header>
+  );
+};
+
+const styles: Record<string, React.CSSProperties> = {
+  header: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: "14px 28px",
+    backgroundColor: "#0f172a",
+    color: "#ffffff",
+    flexWrap: "wrap",
+    gap: "12px",
+  },
+  brand: { fontWeight: 700, fontSize: "1.25rem", color: "#38bdf8" },
+  nav: { display: "flex", alignItems: "center", gap: "18px", flexWrap: "wrap" },
+  link: { color: "#e2e8f0", textDecoration: "none", fontWeight: 500 },
+  btnLink: {
+    backgroundColor: "#0284c7",
+    color: "#ffffff",
+    padding: "6px 14px",
+    borderRadius: "6px",
+    textDecoration: "none",
+    fontWeight: 600,
+  },
+  userBox: { display: "flex", alignItems: "center", gap: "10px" },
+  userBadge: { fontSize: "0.9rem", color: "#7dd3fc" },
+  btnSmall: {
+    backgroundColor: "#334155",
+    color: "#fff",
+    border: "none",
+    padding: "5px 10px",
+    borderRadius: "5px",
+    cursor: "pointer",
+  },
+};
+
+import React from "react";
+
+export const Footer: React.FC = () => {
+  return (
+    <footer style={styles.footer}>
+      <p style={{ margin: 0 }}>
+        CodeMédio — Plataforma de Introdução à Programação para o Ensino Médio • React + TypeScript
+      </p>
+    </footer>
+  );
+};
+
+const styles: Record<string, React.CSSProperties> = {
+  footer: {
+    marginTop: "48px",
+    padding: "18px 28px",
+    backgroundColor: "#f1f5f9",
+    color: "#475569",
+    textAlign: "center",
+    fontSize: "0.9rem",
+    borderTop: "1px solid #e2e8f0",
+  },
+};
+
+import React from "react";
+import { Link } from "react-router-dom";
+
+interface HeroBannerProps {
+  title: string;
+  subtitle: string;
+}
+
+export const HeroBanner: React.FC<HeroBannerProps> = ({ title, subtitle }) => {
+  return (
+    <div style={styles.hero}>
+      <h1 style={styles.h1}>{title}</h1>
+      <p style={styles.lead}>{subtitle}</p>
+      <div style={styles.actions}>
+        <Link style={styles.primaryBtn} to="/dashboard">Ir para as Aulas</Link>
+        <Link style={styles.secondaryBtn} to="/login">Entrar como Aluno</Link>
+      </div>
+    </div>
+  );
+};
+
+const styles: Record<string, React.CSSProperties> = {
+  hero: {
+    backgroundColor: "#eff6ff",
+    border: "1px solid #bfdbfe",
+    borderRadius: "12px",
+    padding: "32px",
+    marginBottom: "28px",
+  },
+  h1: { marginTop: 0, fontSize: "2rem", color: "#0f172a" },
+  lead: { fontSize: "1.1rem", color: "#334155", lineHeight: 1.6 },
+  actions: { display: "flex", gap: "14px", marginTop: "20px", flexWrap: "wrap" },
+  primaryBtn: {
+    backgroundColor: "#1d4ed8",
+    color: "#fff",
+    padding: "10px 18px",
+    borderRadius: "8px",
+    textDecoration: "none",
+    fontWeight: 600,
+  },
+  secondaryBtn: {
+    backgroundColor: "#ffffff",
+    color: "#1d4ed8",
+    border: "1px solid #1d4ed8",
+    padding: "10px 18px",
+    borderRadius: "8px",
+    textDecoration: "none",
+    fontWeight: 600,
+  },
+};
+
+import React, { useState } from "react";
+
+export const AgeSimulator: React.FC = () => {
+  const [studentAge, setStudentAge] = useState<number>(15);
+  const canJoinClub = studentAge >= 14 && studentAge <= 18;
+
+  return (
+    <div style={styles.simBox}>
+      <h2>Teste Rápido de Condicional (<code>if / else</code>)</h2>
+      <label htmlFor="ageInput">
+        Sua idade: <strong>{studentAge} anos</strong>
+      </label>
+      <br />
+      <input
+        id="ageInput"
+        type="range"
+        min={12}
+        max={20}
+        value={studentAge}
+        onChange={(e) => setStudentAge(Number(e.target.value))}
+        style={{ marginTop: "10px", width: "260px" }}
+      />
+      <p style={styles.result}>
+        {canJoinClub
+          ? "Resultado: Dentro da faixa do Ensino Médio — trilha ideal para você!"
+          : "Resultado: Você também pode praticar, mas o foco principal é o Ensino Médio (14 a 18 anos)."}
+      </p>
+    </div>
+  );
+};
+
+const styles: Record<string, React.CSSProperties> = {
+  simBox: {
+    border: "1px solid #cbd5e1",
+    borderRadius: "12px",
+    padding: "24px",
+    backgroundColor: "#fff",
+  },
+  result: { marginTop: "12px", fontWeight: 600, color: "#0f172a" },
+};
+
+import React from "react";
+
+interface StudentStatsProps {
+  studentName: string;
+  schoolGrade: string;
+  loggedIn: boolean;
+  completedCount: number;
+  totalCount: number;
+}
+
+export const StudentStats: React.FC<StudentStatsProps> = ({
+  studentName,
+  schoolGrade,
+  loggedIn,
+  completedCount,
+  totalCount,
+}) => {
+  return (
+    <div style={styles.headerBox}>
+      <div>
+        <h1 style={{ margin: 0 }}>
+          {loggedIn ? `Painel de ${studentName}` : "Painel de Estudos"}
+        </h1>
+        <p style={{ margin: "6px 0 0", color: "#475569" }}>
+          {loggedIn ? schoolGrade : "Visitante — faça login para salvar seu nome"}
+        </p>
+      </div>
+      <div style={styles.progressBox}>
+        Progresso: <strong>{completedCount}/{totalCount}</strong> aulas concluídas
+      </div>
+    </div>
+  );
+};
+
+const styles: Record<string, React.CSSProperties> = {
+  headerBox: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: "12px",
+    marginBottom: "24px",
+  },
+  progressBox: {
+    backgroundColor: "#f0fdf4",
+    border: "1px solid #bbf7d0",
+    color: "#166534",
+    padding: "10px 16px",
+    borderRadius: "8px",
+  },
+};
+
+import React from "react";
+
+interface TopicFilterProps {
+  topics: string[];
+  selectedTopic: string;
+  onSelectTopic: (topic: string) => void;
+}
+
+export const TopicFilter: React.FC<TopicFilterProps> = ({
+  topics,
+  selectedTopic,
+  onSelectTopic,
+}) => {
+  return (
+    <div style={styles.filters}>
+      {topics.map((topic) => (
+        <button
+          key={topic}
+          onClick={() => onSelectTopic(topic)}
+          style={{
+            ...styles.filterBtn,
+            backgroundColor: selectedTopic === topic ? "#0f172a" : "#e2e8f0",
+            color: selectedTopic === topic ? "#ffffff" : "#0f172a",
+          }}
+        >
+          {topic}
+        </button>
+      ))}
+    </div>
+  );
+};
+
+const styles: Record<string, React.CSSProperties> = {
+  filters: { display: "flex", gap: "10px", marginBottom: "24px", flexWrap: "wrap" },
+  filterBtn: {
+    border: "none",
+    padding: "8px 16px",
+    borderRadius: "999px",
+    cursor: "pointer",
+    fontWeight: 600,
+  },
+};
+
+import React from "react";
+import { Lesson } from "../types/learning";
+
+interface LessonCardProps {
+  lesson: Lesson;
+  onToggleComplete: (id: number) => void;
+}
+
+export const LessonCard: React.FC<LessonCardProps> = ({ lesson, onToggleComplete }) => {
+  return (
+    <article style={styles.card}>
+      <div style={styles.topRow}>
+        <span style={styles.badge}>{lesson.topic}</span>
+        <span style={styles.duration}>{lesson.duration}</span>
+      </div>
+      <h3 style={styles.title}>{lesson.title}</h3>
+      <p style={styles.summary}>{lesson.summary}</p>
+      <pre style={styles.code}>
+        <code>{lesson.codeExample}</code>
+      </pre>
+      <button
+        onClick={() => onToggleComplete(lesson.id)}
+        style={{
+          ...styles.button,
+          backgroundColor: lesson.completed ? "#16a34a" : "#2563eb",
+        }}
+      >
+        {lesson.completed ? "✓ Concluída" : "Marcar como concluída"}
+      </button>
+    </article>
+  );
+};
+
+const styles: Record<string, React.CSSProperties> = {
+  card: {
+    border: "1px solid #cbd5e1",
+    borderRadius: "10px",
+    padding: "18px",
+    backgroundColor: "#ffffff",
+    display: "flex",
+    flexDirection: "column",
+    gap: "10px",
+  },
+  topRow: { display: "flex", justifyContent: "space-between", alignItems: "center" },
+  badge: {
+    backgroundColor: "#e0f2fe",
+    color: "#0369a1",
+    padding: "3px 10px",
+    borderRadius: "999px",
+    fontSize: "0.8rem",
+    fontWeight: 600,
+  },
+  duration: { fontSize: "0.85rem", color: "#64748b" },
+  title: { margin: 0, color: "#0f172a" },
+  summary: { margin: 0, color: "#475569", fontSize: "0.95rem" },
+  code: {
+    backgroundColor: "#0f172a",
+    color: "#f8fafc",
+    padding: "12px",
+    borderRadius: "8px",
+    overflowX: "auto",
+    fontSize: "0.85rem",
+    margin: 0,
+  },
+  button: {
+    marginTop: "auto",
+    color: "#ffffff",
+    border: "none",
+    padding: "10px 14px",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontWeight: 600,
+  },
+};
+
+import React, { useRef, useState } from "react";
+
+export const ContactForm: React.FC = () => {
+  const [senderName, setSenderName] = useState<string>("");
+  const [message, setMessage] = useState<string>("");
+  const [sent, setSent] = useState<boolean>(false);
+  const messageRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const handleSend = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setSent(true);
+    setMessage("");
+    messageRef.current?.focus();
+  };
+
+  return (
+    <form onSubmit={handleSend} style={styles.form}>
+      <label style={styles.label}>
+        Seu nome
+        <input
+          type="text"
+          required
+          value={senderName}
+          onChange={(e) => setSenderName(e.target.value)}
+          placeholder="Digite seu nome"
+          style={styles.input}
+        />
+      </label>
+
+      <label style={styles.label}>
+        Dúvida ou sugestão
+        <textarea
+          ref={messageRef}
+          required
+          rows={4}
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          placeholder="Escreva aqui sua dúvida sobre lógica, código ou aulas..."
+          style={styles.input}
+        />
+      </label>
+
+      <button type="submit" style={styles.button}>Enviar Mensagem</button>
+
+      {sent && (
+        <p style={styles.success}>
+          Mensagem enviada com sucesso! Obrigado pelo contato, {senderName || "estudante"}.
+        </p>
+      )}
+    </form>
+  );
+};
+
+const styles: Record<string, React.CSSProperties> = {
+  form: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "16px",
+    backgroundColor: "#fff",
+    padding: "24px",
+    borderRadius: "10px",
+    border: "1px solid #cbd5e1",
+  },
+  label: { display: "flex", flexDirection: "column", gap: "6px", fontWeight: 600, color: "#0f172a" },
+  input: {
+    padding: "10px 12px",
+    borderRadius: "6px",
+    border: "1px solid #94a3b8",
+    fontSize: "1rem",
+    fontFamily: "inherit",
+  },
+  button: {
+    backgroundColor: "#1d4ed8",
+    color: "#fff",
+    border: "none",
+    padding: "12px",
+    borderRadius: "8px",
+    fontWeight: 700,
+    cursor: "pointer",
+  },
+  success: { color: "#15803d", fontWeight: 600, margin: 0 },
+};
+
+import React, { useEffect } from "react";
+import { HeroBanner } from "../components/HeroBanner";
+import { AgeSimulator } from "../components/AgeSimulator";
+
+export const HomePage: React.FC = () => {
+  useEffect(() => {
+    document.title = "CodeMédio | Programação para o Ensino Médio";
+  }, []);
+
+  return (
+    <section style={{ maxWidth: "960px", margin: "0 auto", padding: "32px 20px" }}>
+      <HeroBanner
+        title="Aprenda Programação do Zero no Ensino Médio"
+        subtitle="Construa lógica, resolva problemas do cotidiano e dê seus primeiros passos com código de forma prática e direta."
+      />
+      <AgeSimulator />
+    </section>
+  );
+};
+
+import React, { useEffect } from "react";
+
+export const AboutPage: React.FC = () => {
+  useEffect(() => {
+    document.title = "CodeMédio | Sobre o Projeto";
+  }, []);
+
+  return (
+    <section style={styles.container}>
+      <h1>Sobre a Metodologia</h1>
+      <p style={styles.p}>
+        Muitos estudantes do ensino médio acham que programação é difícil por começarem direto em
+        ferramentas complexas sem entender a lógica por trás. Aqui, cada conceito conecta teoria
+        curta, exemplo real e prática imediata.
+      </p>
+      <ul style={styles.list}>
+        <li><strong>Lógica primeiro:</strong> variáveis, condições e listas explicadas sem rodeios.</li>
+        <li><strong>Tipagem clara com TypeScript:</strong> ajuda a prevenir erros comuns desde o início.</li>
+        <li><strong>Progresso visível:</strong> acompanhe as aulas que você já concluiu no Dashboard.</li>
+      </ul>
+    </section>
+  );
+};
+
+const styles: Record<string, React.CSSProperties> = {
+  container: { maxWidth: "820px", margin: "0 auto", padding: "32px 20px" },
+  p: { color: "#334155", lineHeight: 1.7, fontSize: "1.05rem" },
+  list: { color: "#1e293b", lineHeight: 1.8, paddingLeft: "20px" },
+};
+
+import React, { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+
+export const LoginPage: React.FC = () => {
+  const { loginStudent } = useAuth();
+  const navigate = useNavigate();
+
+  const [name, setName] = useState<string>("");
+  const [schoolGrade, setSchoolGrade] = useState<string>("1º Ano do Ensino Médio");
+  const nameInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    document.title = "CodeMédio | Login do Aluno";
+    nameInputRef.current?.focus();
+  }, []);
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    loginStudent(name, schoolGrade);
+    navigate("/dashboard");
+  };
+
+  return (
+    <section style={styles.container}>
+      <h1>Acesso do Estudante</h1>
+      <p style={{ color: "#475569" }}>
+        Informe seu nome e série para personalizar sua experiência no painel de estudos.
+      </p>
+
+      <form onSubmit={handleSubmit} style={styles.form}>
+        <label style={styles.label}>
+          Nome completo ou apelido
+          <input
+            ref={nameInputRef}
+            type="text"
+            required
+            placeholder="Ex.: Lucas"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            style={styles.input}
+          />
+        </label>
+
+        <label style={styles.label}>
+          Série do Ensino Médio
+          <select
+            value={schoolGrade}
+            onChange={(e) => setSchoolGrade(e.target.value)}
+            style={styles.input}
+          >
+            <option value="1º Ano do Ensino Médio">1º Ano do Ensino Médio</option>
+            <option value="2º Ano do Ensino Médio">2º Ano do Ensino Médio</option>
+            <option value="3º Ano do Ensino Médio">3º Ano do Ensino Médio</option>
+          </select>
+        </label>
+
+        <button type="submit" style={styles.button}>Entrar no Dashboard</button>
+      </form>
+    </section>
+  );
+};
+
+const styles: Record<string, React.CSSProperties> = {
+  container: { maxWidth: "480px", margin: "0 auto", padding: "32px 20px" },
+  form: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "16px",
+    backgroundColor: "#fff",
+    padding: "24px",
+    borderRadius: "10px",
+    border: "1px solid #cbd5e1",
+  },
+  label: { display: "flex", flexDirection: "column", gap: "6px", fontWeight: 600, color: "#0f172a" },
+  input: {
+    padding: "10px 12px",
+    borderRadius: "6px",
+    border: "1px solid #94a3b8",
+    fontSize: "1rem",
+  },
+  button: {
+    backgroundColor: "#0284c7",
+    color: "#fff",
+    border: "none",
+    padding: "12px",
+    borderRadius: "8px",
+    fontWeight: 700,
+    cursor: "pointer",
+  },
+};
+
+import React, { useEffect, useState } from "react";
+import { INITIAL_LESSONS } from "../data/lessonsData";
+import { Lesson } from "../types/learning";
+import { LessonCard } from "../components/LessonCard";
+import { StudentStats } from "../components/StudentStats";
+import { TopicFilter } from "../components/TopicFilter";
+import { useAuth } from "../contexts/AuthContext";
+
+export const DashboardPage: React.FC = () => {
+  const { student } = useAuth();
+  const [lessons, setLessons] = useState<Lesson[]>(INITIAL_LESSONS);
+  const [selectedTopic, setSelectedTopic] = useState<string>("Todas");
+
+  useEffect(() => {
+    document.title = "CodeMédio | Dashboard de Estudos";
+  }, []);
+
+  const handleToggleComplete = (id: number) => {
+    setLessons((prev) =>
+      prev.map((item) =>
+        item.id === id ? { ...item, completed: !item.completed } : item
+      )
+    );
+  };
+
+  const filteredLessons =
+    selectedTopic === "Todas"
+      ? lessons
+      : lessons.filter((item) => item.topic === selectedTopic);
+
+  const completedCount = lessons.filter((item) => item.completed).length;
+
+  return (
+    <section style={{ maxWidth: "1040px", margin: "0 auto", padding: "32px 20px" }}>
+      <StudentStats
+        studentName={student.name}
+        schoolGrade={student.schoolGrade}
+        loggedIn={student.loggedIn}
+        completedCount={completedCount}
+        totalCount={lessons.length}
+      />
+      <TopicFilter
+        topics={["Todas", "Lógica", "Web", "Dados"]}
+        selectedTopic={selectedTopic}
+        onSelectTopic={setSelectedTopic}
+      />
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+          gap: "20px",
+        }}
+      >
+        {filteredLessons.map((lesson) => (
+          <LessonCard
+            key={lesson.id}
+            lesson={lesson}
+            onToggleComplete={handleToggleComplete}
+          />
+        ))}
+      </div>
+    </section>
+  );
+};
+
+import React, { useEffect } from "react";
+import { ContactForm } from "../components/ContactForm";
+
+export const ContactPage: React.FC = () => {
+  useEffect(() => {
+    document.title = "CodeMédio | Contato e Dúvidas";
+  }, []);
+
+  return (
+    <section style={{ maxWidth: "560px", margin: "0 auto", padding: "32px 20px" }}>
+      <h1>Fale com a Equipe</h1>
+      <p style={{ color: "#475569" }}>
+        Ficou com dúvida em algum exercício ou quer sugerir um tema de aula? Envie uma mensagem.
+      </p>
+      <ContactForm />
+    </section>
+  );
+};
+
+import React from "react";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { AuthProvider } from "./contexts/AuthContext";
+import { Navbar } from "./components/Navbar";
+import { Footer } from "./components/Footer";
+import { HomePage } from "./pages/HomePage";
+import { AboutPage } from "./pages/AboutPage";
+import { LoginPage } from "./pages/LoginPage";
+import { DashboardPage } from "./pages/DashboardPage";
+import { ContactPage } from "./pages/ContactPage";
+
+export const App: React.FC = () => {
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+          <Navbar />
+          <main style={{ flex: 1 }}>
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/sobre" element={<AboutPage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/contato" element={<ContactPage />} />
+            </Routes>
+          </main>
+          <Footer />
+        </div>
+      </BrowserRouter>
+    </AuthProvider>
+  );
+};
+
+export default App;
